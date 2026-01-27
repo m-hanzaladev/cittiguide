@@ -67,7 +67,13 @@ class _SearchScreenState extends State<SearchScreen> {
         automaticallyImplyLeading: false, // Hide back button if using as tab, or check Navigator.canPop
         // Or if we want back button ONLY when pushed:
         leading: Navigator.canPop(context) 
-            ? IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)) 
+            ? IconButton(icon: const Icon(Icons.arrow_back), onPressed: () {
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                } else {
+                  Navigator.pushReplacementNamed(context, '/home');
+                }
+              }) 
             : null,
         actions: [
           if (_query.isNotEmpty)

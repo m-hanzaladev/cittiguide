@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/app_image.dart';
 import 'package:provider/provider.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
@@ -28,9 +29,9 @@ class ProfileScreen extends StatelessWidget {
           Container(
             width: 100,
             height: 100,
-            alignment: Alignment.center,
+            clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor,
+              color: Colors.transparent,
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white, width: 2),
               boxShadow: [
@@ -41,14 +42,23 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ],
             ),
-             child: Text(
-               (user.name.isNotEmpty) ? user.name[0].toUpperCase() : '?',
-               style: const TextStyle(
-                 fontSize: 40,
-                 fontWeight: FontWeight.bold,
-                 color: Colors.white,
-               ),
-             ),
+            child: (user.profilePicture != null && user.profilePicture!.isNotEmpty)
+                ? AppImage(
+                    imageUrl: user.profilePicture!,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                  )
+                : Center(
+                    child: Text(
+                      (user.name.isNotEmpty) ? user.name[0].toUpperCase() : '?',
+                      style: const TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
           ),
           const SizedBox(height: 16),
           Text(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
+import 'app_image.dart';
 import '../../models/review_model.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -29,14 +30,27 @@ class ReviewCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundImage: review.userAvatarUrl.isNotEmpty
-                    ? NetworkImage(review.userAvatarUrl)
-                    : null,
-                child: review.userAvatarUrl.isEmpty
-                    ? Text(review.userName[0].toUpperCase())
-                    : null,
+              Container(
+                width: 40,
+                height: 40,
+                clipBehavior: Clip.antiAlias,
+                decoration: const BoxDecoration(
+                  color: Colors.transparent,
+                  shape: BoxShape.circle,
+                ),
+                child: (review.userAvatarUrl.isNotEmpty)
+                    ? AppImage(
+                        imageUrl: review.userAvatarUrl,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                      )
+                    : Center(
+                        child: Text(
+                          review.userName.isNotEmpty ? review.userName[0].toUpperCase() : '?',
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                        ),
+                      ),
               ),
               const SizedBox(width: 12),
               Expanded(

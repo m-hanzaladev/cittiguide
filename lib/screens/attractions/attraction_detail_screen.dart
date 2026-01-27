@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../../theme/app_theme.dart';
 import '../../models/attraction_model.dart';
 import '../../models/review_model.dart';
@@ -9,6 +11,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/review_provider.dart';
 import '../../widgets/review_card.dart';
 import '../../utils/app_constants.dart';
+import '../../widgets/app_image.dart';
 
 class AttractionDetailScreen extends StatefulWidget {
   final AttractionModel attraction;
@@ -136,23 +139,33 @@ class _AttractionDetailScreenState extends State<AttractionDetailScreen> {
                 backgroundColor: Colors.black45,
                 child: Icon(Icons.arrow_back, color: Colors.white),
               ),
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                } else {
+                  Navigator.pushReplacementNamed(context, '/home');
+                }
+              },
             ),
             actions: [
               Consumer<AuthProvider>(
                 builder: (context, auth, _) {
                   final isFavorite = auth.currentUser?.favorites.contains(attraction.id) ?? false;
-                  return IconButton(
-                    icon: CircleAvatar(
-                      backgroundColor: Colors.black45,
+                  return GestureDetector(
+                    onTap: () => auth.toggleFavorite(attraction.id),
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 16, top: 4, bottom: 4),
+                      padding: const EdgeInsets.all(8),
+                      decoration: const BoxDecoration(
+                        color: Colors.black45,
+                        shape: BoxShape.circle,
+                      ),
                       child: Icon(
                         isFavorite ? Icons.favorite : Icons.favorite_border,
                         color: isFavorite ? AppTheme.errorColor : Colors.white,
+                        size: 24,
                       ),
                     ),
-                    onPressed: () {
-                       auth.toggleFavorite(attraction.id);
-                    },
                   );
                 },
               ),
@@ -162,10 +175,9 @@ class _AttractionDetailScreenState extends State<AttractionDetailScreen> {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.network(
-                    attraction.imageUrls.isNotEmpty ? attraction.imageUrls.first : '',
+                  AppImage(
+                    imageUrl: attraction.imageUrls.isNotEmpty ? attraction.imageUrls.first : '',
                     fit: BoxFit.cover,
-                    errorBuilder: (_,__,___) => Container(color: Colors.grey),
                   ),
                   Container(
                     decoration: BoxDecoration(
@@ -246,45 +258,82 @@ class _AttractionDetailScreenState extends State<AttractionDetailScreen> {
                   ),
                   const SizedBox(height: 24),
                   
-                  // Info Cards
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildInfoButton(
-                          context,
-                          icon: Icons.map,
-                          label: 'Directions',
-                          onTap: _launchMap,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildInfoButton(
-                          context,
-                          icon: Icons.language,
-                          label: 'Website',
-                          onTap: () async {
-                            if (attraction.website.isNotEmpty) {
-                              final url = Uri.parse(attraction.website);
-                              if (await canLaunchUrl(url)) {
-                                await launchUrl(url, mode: LaunchMode.externalApplication);
-                              }
-                            }
-                          },
-                          isActive: attraction.website.isNotEmpty,
-                        ),
-                      ),
-                    ],
+                  // Map Preview
+                  Text(
+                    'Location',
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
+                  const SizedBox(height: 16),
+                  Container(
+                    height: 200,
+                    width: double.infinity,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppTheme.surfaceColor),
+                    ),
+                    child: FlutterMap(
+                      options: MapOptions(
+                        initialCenter: LatLng(
+                          attraction.location.latitude,
+                          attraction.location.longitude,
+                        ),
+                        initialZoom: 15.0,
+                      ),
+                      children: [
+                        TileLayer(
+                          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          userAgentPackageName: 'com.cittiguide.app',
+                        ),
+                        MarkerLayer(
+                          markers: [
+                            Marker(
+                              point: LatLng(
+                                attraction.location.latitude,
+                                attraction.location.longitude,
+                              ),
+                              width: 80,
+                              height: 80,
+                              child: const Icon(
+                                Icons.location_on,
+                                color: AppTheme.errorColor,
+                                size: 40,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (attraction.location.address.isNotEmpty)
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on_outlined, size: 16, color: AppTheme.textSecondary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            attraction.location.address,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: AppTheme.textSecondary,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   const SizedBox(height: 32),
                   
                   // Reviews Header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Reviews',
-                        style: Theme.of(context).textTheme.titleLarge,
+                      Expanded(
+                        child: Text(
+                          'Reviews',
+                          style: Theme.of(context).textTheme.titleLarge,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                       TextButton.icon(
                         onPressed: _showAddReviewDialog,

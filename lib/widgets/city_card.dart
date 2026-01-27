@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/city_model.dart';
 import '../../theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../widgets/app_image.dart';
 
 class CityCard extends StatelessWidget {
   final CityModel city;
@@ -19,38 +20,27 @@ class CityCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 20),
-        // height: 400, // Fixed height removed to allow parent to control
-        constraints: const BoxConstraints(minHeight: 200), // Ensure functionality in PageView
+        height: 240,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(32),
+          borderRadius: BorderRadius.circular(16),
           color: AppTheme.cardColor,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(32),
+          borderRadius: BorderRadius.circular(16),
           child: Stack(
             fit: StackFit.expand,
             children: [
               // City Image
-              Image.network(
-                city.imageUrl,
+              AppImage(
+                imageUrl: city.imageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: AppTheme.surfaceColor,
-                    child: const Icon(
-                      Icons.location_city,
-                      size: 50,
-                      color: AppTheme.textTertiary,
-                    ),
-                  );
-                },
               ),
               
               // Gradient Overlay

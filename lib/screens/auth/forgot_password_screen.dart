@@ -72,7 +72,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 const SizedBox(height: 40),
                 // Back Button
                 GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
+                  onTap: () {
+                    if (Navigator.canPop(context)) {
+                      Navigator.pop(context);
+                    } else {
+                      Navigator.pushReplacementNamed(context, '/home');
+                    }
+                  },
                   child: Container(
                     width: 40,
                     height: 40,
@@ -109,7 +115,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 
                 // Title
                 Text(
-                  'Forgot Password? 🔒',
+                  'Forgot Password?',
                   style: Theme.of(context).textTheme.displaySmall,
                 ),
                 const SizedBox(height: 8),
@@ -119,14 +125,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
                 const SizedBox(height: 40),
 
-                // Email Field
-                Text(
-                  'Email Address',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
                 CustomTextField(
                   controller: _emailController,
+                  labelText: 'Email Address',
                   hintText: 'Enter your email',
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: Icons.email_outlined,

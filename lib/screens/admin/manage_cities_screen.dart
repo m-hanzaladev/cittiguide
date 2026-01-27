@@ -4,6 +4,7 @@ import '../../theme/app_theme.dart';
 import '../../providers/city_provider.dart';
 import '../../models/city_model.dart';
 import 'add_edit_city_screen.dart';
+import '../../widgets/app_image.dart';
 
 class ManageCitiesScreen extends StatelessWidget {
   const ManageCitiesScreen({super.key});
@@ -18,6 +19,16 @@ class ManageCitiesScreen extends StatelessWidget {
         title: const Text('Manage Cities'),
         backgroundColor: AppTheme.surfaceColor,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushReplacementNamed(context, '/home');
+            }
+          },
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppTheme.primaryColor,
@@ -46,17 +57,10 @@ class ManageCitiesScreen extends StatelessWidget {
                     contentPadding: const EdgeInsets.all(16),
                     leading: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        city.imageUrl,
+                      child: AppImage(
+                        imageUrl: city.imageUrl,
                         width: 60,
                         height: 60,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          width: 60,
-                          height: 60,
-                          color: Colors.grey,
-                          child: const Icon(Icons.broken_image),
-                        ),
                       ),
                     ),
                     title: Text(

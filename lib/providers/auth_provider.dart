@@ -92,16 +92,48 @@ class AuthProvider extends ChangeNotifier {
   Future<void> toggleFavorite(String attractionId) async {
     if (_currentUser == null) return;
     
-    final db = DatabaseService();
-    final isFavorite = _currentUser!.favorites.contains(attractionId);
+    final List<String> currentFavorites = List<String>.from(_currentUser!.favorites);
+    final isFavorite = currentFavorites.contains(attractionId);
     
     if (isFavorite) {
+      currentFavorites.remove(attractionId);
+    } else {
+      currentFavorites.add(attractionId);
+    }
+    
+    // Immutable update
+    _currentUser = _currentUser!.copyWith(favorites: currentFavorites);
+    notifyListeners();
+
+    final db = DatabaseService();
+    if (isFavorite) {
       await db.removeFromFavorites(_currentUser!.id, attractionId);
-      _currentUser!.favorites.remove(attractionId);
     } else {
       await db.addToFavorites(_currentUser!.id, attractionId);
-      _currentUser!.favorites.add(attractionId);
     }
+  }
+
+  Future<void> toggleCityFavorite(String cityId) async {
+    if (_currentUser == null) return;
+    
+    final List<String> currentFavorites = List<String>.from(_currentUser!.favoriteCities);
+    final isFavorite = currentFavorites.contains(cityId);
+    
+    if (isFavorite) {
+      currentFavorites.remove(cityId);
+    } else {
+      currentFavorites.add(cityId);
+    }
+    
+    // Immutable update
+    _currentUser = _currentUser!.copyWith(favoriteCities: currentFavorites);
     notifyListeners();
+
+    final db = DatabaseService();
+    if (isFavorite) {
+      await db.removeCityFromFavorites(_currentUser!.id, cityId);
+    } else {
+      await db.addCityToFavorites(_currentUser!.id, cityId);
+    }
   }
 }

@@ -1,4 +1,5 @@
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/foundation.dart';
 import '../models/city_model.dart';
 import '../models/attraction_model.dart';
 import '../models/review_model.dart';
@@ -10,6 +11,30 @@ class DatabaseService {
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
   
   DatabaseReference get database => _database;
+  DatabaseReference get imagesRef => _database.child('images');
+
+  // Image Storage methods (Base64 in RTDB)
+  Future<void> saveImage(String path, String base64Data) async {
+    try {
+      await _database.child('images').child(path).set(base64Data);
+    } catch (e) {
+      debugPrint("DB ERROR (saveImage): $e");
+      rethrow;
+    }
+  }
+
+  Future<String?> getImage(String path) async {
+    try {
+      final snapshot = await _database.child('images').child(path).get();
+      if (snapshot.exists) {
+        return snapshot.value as String;
+      }
+      return null;
+    } catch (e) {
+      debugPrint("DB ERROR (getImage): $e");
+      return null;
+    }
+  }
 
   Stream<List<CityModel>> getCities() {
     return _database.child(AppConstants.citiesCollection).onValue.map((event) {
@@ -49,7 +74,8 @@ class DatabaseService {
       final newCityRef = _database.child(AppConstants.citiesCollection).push();
       await newCityRef.set(city.toJson());
     } catch (e) {
-      throw AppConstants.errorGeneric;
+      debugPrint("DB ERROR (addCity): $e");
+      rethrow;
     }
   }
 
@@ -137,7 +163,8 @@ class DatabaseService {
           _database.child(AppConstants.attractionsCollection).push();
       await newAttractionRef.set(attraction.toJson());
     } catch (e) {
-      throw AppConstants.errorGeneric;
+      debugPrint("DB ERROR (addAttraction): $e");
+      rethrow;
     }
   }
 
@@ -295,7 +322,8 @@ class DatabaseService {
       // Better:
       await newCategoryRef.set(category.toJson());
     } catch (e) {
-      throw AppConstants.errorGeneric;
+      debugPrint("DB ERROR (addCategory): $e");
+      rethrow;
     }
   }
 
@@ -378,6 +406,74 @@ class DatabaseService {
         return favorites;
       }
       return [];
+    } catch (e) {
+      throw AppConstants.errorGeneric;
+    }
+  }
+
+  Future<List<CityModel>> getUserFavoriteCities(String userId) async {
+    try {
+      final userSnapshot =
+          await _database.child(AppConstants.usersCollection).child(userId).get();
+
+      if (userSnapshot.exists) {
+        final userData = Map<String, dynamic>.from(userSnapshot.value as Map);
+        final List<String> favoriteCityIds = userData['favoriteCities'] != null
+            ? List<String>.from(userData['favoriteCities'])
+            : [];
+
+        final List<CityModel> favoriteCities = [];
+        for (final id in favoriteCityIds) {
+          final city = await getCityById(id);
+          if (city != null) {
+            favoriteCities.add(city);
+          }
+        }
+        return favoriteCities;
+      }
+      return [];
+    } catch (e) {
+      throw AppConstants.errorGeneric;
+    }
+  }
+
+  Future<void> addCityToFavorites(String userId, String cityId) async {
+    try {
+      final userRef = _database.child(AppConstants.usersCollection).child(userId);
+      final snapshot = await userRef.get();
+
+      if (snapshot.exists) {
+        final userData = Map<String, dynamic>.from(snapshot.value as Map);
+        final List<String> favoriteCities = userData['favoriteCities'] != null
+            ? List<String>.from(userData['favoriteCities'])
+            : [];
+
+        if (!favoriteCities.contains(cityId)) {
+          favoriteCities.add(cityId);
+          await userRef.update({'favoriteCities': favoriteCities});
+        }
+      }
+    } catch (e) {
+      throw AppConstants.errorGeneric;
+    }
+  }
+
+  Future<void> removeCityFromFavorites(String userId, String cityId) async {
+    try {
+      final userRef = _database.child(AppConstants.usersCollection).child(userId);
+      final snapshot = await userRef.get();
+
+      if (snapshot.exists) {
+        final userData = Map<String, dynamic>.from(snapshot.value as Map);
+        final List<String> favoriteCities = userData['favoriteCities'] != null
+            ? List<String>.from(userData['favoriteCities'])
+            : [];
+
+        if (favoriteCities.contains(cityId)) {
+          favoriteCities.remove(cityId);
+          await userRef.update({'favoriteCities': favoriteCities});
+        }
+      }
     } catch (e) {
       throw AppConstants.errorGeneric;
     }

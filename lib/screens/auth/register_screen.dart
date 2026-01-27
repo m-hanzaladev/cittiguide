@@ -114,11 +114,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 20),
+                Center(
+                  child: Image.asset(
+                    'assets/app_logo.png',
+                    height: 80,
+                  ),
+                ),
+                const SizedBox(height: 20),
                 
                 // Welcome Text
                 Text(
-                  'Create Account ✨',
+                  'Create Account',
                   style: Theme.of(context).textTheme.displaySmall,
                 ),
                 const SizedBox(height: 8),
@@ -128,14 +135,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // Name Field
-                Text(
-                  'Full Name',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
                 CustomTextField(
                   controller: _nameController,
+                  labelText: 'Full Name',
                   hintText: 'Enter your full name',
                   prefixIcon: Icons.person_outline,
                   validator: (value) {
@@ -150,14 +152,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Email Field
-                Text(
-                  'Email',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
                 CustomTextField(
                   controller: _emailController,
+                  labelText: 'Email',
                   hintText: 'Enter your email',
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: Icons.email_outlined,
@@ -173,14 +170,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Password Field
-                Text(
-                  'Password',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
                 CustomTextField(
                   controller: _passwordController,
+                  labelText: 'Password',
                   hintText: 'Create a password',
                   obscureText: _obscurePassword,
                   prefixIcon: Icons.lock_outline,
@@ -209,14 +201,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Confirm Password Field
-                Text(
-                  'Confirm Password',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
                 CustomTextField(
                   controller: _confirmPasswordController,
+                  labelText: 'Confirm Password',
                   hintText: 'Confirm your password',
                   obscureText: _obscureConfirmPassword,
                   prefixIcon: Icons.lock_outline,

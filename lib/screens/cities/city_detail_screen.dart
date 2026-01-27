@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/city_provider.dart';
 import '../../providers/attraction_provider.dart';
 import '../../widgets/attraction_card.dart';
 import '../../utils/app_constants.dart';
 import '../attractions/attraction_detail_screen.dart';
+import '../../widgets/app_image.dart';
+import '../../providers/auth_provider.dart';
+import 'city_attractions_screen.dart';
 
 class CityDetailScreen extends StatefulWidget {
   const CityDetailScreen({super.key});
@@ -44,7 +49,13 @@ class _CityDetailScreenState extends State<CityDetailScreen> {
             pinned: true,
             backgroundColor: AppTheme.backgroundColor,
             leading: GestureDetector(
-              onTap: () => Navigator.pop(context),
+              onTap: () {
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                } else {
+                  Navigator.pushReplacementNamed(context, '/home');
+                }
+              },
               child: Container(
                 margin: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -55,22 +66,34 @@ class _CityDetailScreenState extends State<CityDetailScreen> {
               ),
             ),
             actions: [
-              Container(
-                margin: const EdgeInsets.only(right: 16),
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceColor.withOpacity(0.8),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.favorite_border),
+              Consumer<AuthProvider>(
+                builder: (context, auth, _) {
+                  final isFavorite = auth.currentUser?.favoriteCities.contains(city.id) ?? false;
+                  return GestureDetector(
+                    onTap: () => auth.toggleCityFavorite(city.id),
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceColor.withOpacity(0.8),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: isFavorite ? AppTheme.errorColor : Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.network(
-                    city.imageUrl,
+                  AppImage(
+                    imageUrl: city.imageUrl,
                     fit: BoxFit.cover,
                   ),
                   Container(
@@ -140,47 +163,86 @@ class _CityDetailScreenState extends State<CityDetailScreen> {
                   ),
                   const SizedBox(height: 32),
 
-                  // Map Preview (Placeholder for now)
-                  Container(
-                    height: 120,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: AppTheme.surfaceColor,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppTheme.cardColor),
+                  // Location Map
+                  if (attractionProvider.attractions.isNotEmpty) ...[
+                    Text(
+                      'Location',
+                      style: Theme.of(context).textTheme.headlineSmall,
                     ),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        const Icon(Icons.map, size: 48, color: AppTheme.textTertiary),
-                        Positioned(
-                          bottom: 16,
-                          child: Text(
-                            'View on Map',
-                            style: GoogleFonts.poppins(
-                              color: AppTheme.primaryColor,
-                              fontWeight: FontWeight.w600,
-                            ),
+                    const SizedBox(height: 16),
+                    Container(
+                      height: 200,
+                      width: double.infinity,
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppTheme.surfaceColor),
+                      ),
+                      child: FlutterMap(
+                        options: MapOptions(
+                          initialCenter: LatLng(
+                            city.latitude ?? (attractionProvider.attractions.isNotEmpty 
+                                ? attractionProvider.attractions.first.location.latitude 
+                                : 0.0),
+                            city.longitude ?? (attractionProvider.attractions.isNotEmpty 
+                                ? attractionProvider.attractions.first.location.longitude 
+                                : 0.0),
                           ),
+                          initialZoom: 12.0,
                         ),
-                      ],
+                        children: [
+                          TileLayer(
+                            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            userAgentPackageName: 'com.cittiguide.app',
+                          ),
+                          MarkerLayer(
+                            markers: attractionProvider.attractions.map((attr) {
+                              return Marker(
+                                point: LatLng(
+                                  attr.location.latitude,
+                                  attr.location.longitude,
+                                ),
+                                width: 40,
+                                height: 40,
+                                child: const Icon(
+                                  Icons.location_on,
+                                  color: AppTheme.errorColor,
+                                  size: 24,
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 32),
+                    const SizedBox(height: 32),
+                  ],
 
                   // Popular Attractions
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Popular Places',
-                        style: Theme.of(context).textTheme.headlineSmall,
+                      Expanded(
+                        child: Text(
+                          'Popular Places',
+                          style: Theme.of(context).textTheme.headlineSmall,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                      Text(
-                        'See all',
-                        style: GoogleFonts.inter(
-                          color: AppTheme.textSecondary,
-                          fontSize: 14,
+                      const SizedBox(width: 16),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const CityAttractionsScreen()),
+                          );
+                        },
+                        child: Text(
+                          'See all',
+                          style: GoogleFonts.inter(
+                            color: AppTheme.textSecondary,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
                     ],

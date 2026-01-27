@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/attraction_model.dart';
 import '../../theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../widgets/app_image.dart';
 
 class AttractionCard extends StatelessWidget {
   final AttractionModel attraction;
@@ -21,34 +22,29 @@ class AttractionCard extends StatelessWidget {
         width: 200,
         margin: const EdgeInsets.only(right: 16),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
           color: AppTheme.cardColor,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Image
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-              child: attraction.imageUrls.isNotEmpty
-                  ? Image.network(
-                      attraction.imageUrls.first,
-                      height: 140,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          height: 140,
-                          color: AppTheme.surfaceColor,
-                          child: const Icon(Icons.image_not_supported, color: AppTheme.textTertiary),
-                        );
-                      },
-                    )
-                  : Container(
-                      height: 140,
-                      color: AppTheme.surfaceColor,
-                      child: const Icon(Icons.image_not_supported, color: AppTheme.textTertiary),
-                    ),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              child: AppImage(
+                imageUrl: attraction.imageUrls.isNotEmpty
+                    ? attraction.imageUrls.first
+                    : '',
+                height: 120,
+                width: double.infinity,
+              ),
             ),
             
             // Content

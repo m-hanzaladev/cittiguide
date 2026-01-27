@@ -12,6 +12,7 @@ class CustomTextField extends StatelessWidget {
   final int maxLines;
   final ValueChanged<String>? onChanged;
   final bool readOnly;
+  final String? labelText;
 
   const CustomTextField({
     super.key,
@@ -25,6 +26,7 @@ class CustomTextField extends StatelessWidget {
     this.maxLines = 1,
     this.onChanged,
     this.readOnly = false,
+    this.labelText,
   });
 
   @override
@@ -42,6 +44,7 @@ class CustomTextField extends StatelessWidget {
         fontFamily: 'Inter',
       ),
       decoration: InputDecoration(
+        labelText: labelText,
         hintText: hintText,
         prefixIcon: prefixIcon != null
             ? Icon(

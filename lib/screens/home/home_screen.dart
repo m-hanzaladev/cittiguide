@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/city_provider.dart';
 import '../../providers/attraction_provider.dart';
 import '../../widgets/city_card.dart';
+import '../../widgets/app_image.dart';
 import '../../models/user_model.dart';
 import '../../utils/app_constants.dart';
 import '../cities/city_detail_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
 import '../profile/profile_screen.dart';
 import '../favorites/favorites_screen.dart';
-import '../favorites/favorites_screen.dart';
 import '../search/search_screen.dart';
 import 'interest_result_screen.dart';
 import '../../providers/category_provider.dart';
 import 'all_interests_screen.dart';
-
+import '../cities/all_cities_screen.dart';
 import '../notifications/notification_screen.dart';
 import '../profile/settings_screen.dart';
 
@@ -29,7 +30,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
+  int _currentIndex = 2; // Home as center
 
   @override
   Widget build(BuildContext context) {
@@ -39,32 +40,43 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
+      extendBody: true,
       drawer: _buildDrawer(context, user, authProvider),
       body: SafeArea(
+        bottom: false,
         child: IndexedStack(
           index: _currentIndex,
           children: [
-            _buildHomeBody(context, user, cityProvider),
             const SearchScreen(),
-            const AllInterestsScreen(), 
+            const AllInterestsScreen(),
+            _buildHomeBody(context, user, cityProvider),
             const FavoritesScreen(),
             const ProfileScreen(),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => setState(() => _currentIndex = 0),
-        backgroundColor: AppTheme.primaryColor,
-        elevation: 4.0,
-        shape: const CircleBorder(),
-        child: Icon(
-          Icons.home_filled,
-          color: Colors.white,
-          size: 28,
-        ),
+      bottomNavigationBar: CurvedNavigationBar(
+        index: _currentIndex,
+        height: 50.0,
+        items: const <Widget>[
+          Icon(Icons.search, size: 30, color: AppTheme.backgroundColor),
+          Icon(Icons.category, size: 30, color: AppTheme.backgroundColor),
+          Icon(Icons.home, size: 30, color: AppTheme.backgroundColor),
+          Icon(Icons.favorite, size: 30, color: AppTheme.backgroundColor),
+          Icon(Icons.person, size: 30, color: AppTheme.backgroundColor),
+        ],
+        color: AppTheme.primaryColor,
+        buttonBackgroundColor: AppTheme.primaryColor,
+        backgroundColor: Colors.transparent,
+        animationCurve: Curves.easeInOut,
+        animationDuration: const Duration(milliseconds: 600),
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        letIndexChange: (index) => true,
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
@@ -83,12 +95,25 @@ class _HomeScreenState extends State<HomeScreen> {
               user?.email ?? '',
               style: GoogleFonts.inter(),
             ),
-            currentAccountPicture: CircleAvatar(
-              backgroundColor: Colors.white,
-              child: Text(
-                user?.name.isNotEmpty == true ? user!.name[0].toUpperCase() : 'T',
-                style: const TextStyle(fontSize: 24, color: AppTheme.primaryColor),
+            currentAccountPicture: Container(
+              decoration: const BoxDecoration(
+                color: Colors.transparent,
+                shape: BoxShape.circle,
               ),
+              clipBehavior: Clip.antiAlias,
+              child: (user?.profilePicture != null && user!.profilePicture!.isNotEmpty)
+                  ? AppImage(
+                      imageUrl: user.profilePicture!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                    )
+                  : Center(
+                      child: Text(
+                        user?.name.isNotEmpty == true ? user!.name[0].toUpperCase() : 'T',
+                        style: const TextStyle(fontSize: 24, color: AppTheme.primaryColor, fontWeight: FontWeight.bold),
+                      ),
+                    ),
             ),
           ),
           ListTile(
@@ -137,96 +162,151 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Builder(
-                    builder: (context) => GestureDetector(
-                      onTap: () {
-                        Scaffold.of(context).openDrawer();
-                      },
-                      child: Container(
-                        width: 48,
-                        height: 48,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                        ),
-                        child: Text(
-                          displayName.isNotEmpty ? displayName[0].toUpperCase() : 'T',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+              Flexible(
+                flex: 2,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Builder(
+                      builder: (context) => GestureDetector(
+                        onTap: () {
+                          Scaffold.of(context).openDrawer();
+                        },
+                        child: Container(
+                          width: 48,
+                          height: 48,
+                          clipBehavior: Clip.antiAlias,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
                           ),
+                          child: (user?.profilePicture != null && user!.profilePicture!.isNotEmpty)
+                              ? AppImage(
+                                  imageUrl: user.profilePicture!,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                )
+                              : Text(
+                                  displayName.isNotEmpty ? displayName[0].toUpperCase() : 'T',
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Hi, $displayName',
-                        style: Theme.of(context).textTheme.titleLarge,
+                    const SizedBox(width: 12),
+                    Flexible(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Hi, $displayName',
+                            style: Theme.of(context).textTheme.titleLarge,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            'Good morning',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
                       ),
-                      Text(
-                        'Good morning',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ],
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: Center(
+                  child: Image.asset(
+                    'assets/app_logo.png',
+                    height: 40,
                   ),
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const NotificationScreen()),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.notifications_outlined,
+                        color: AppTheme.textPrimary,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                  if (user?.isAdmin == true) ...[
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppTheme.primaryColor),
+                        ),
+                        child: const Icon(
+                          Icons.admin_panel_settings,
+                          color: AppTheme.primaryColor,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Featured Cities',
+                style: Theme.of(context).textTheme.headlineSmall,
               ),
               GestureDetector(
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const NotificationScreen()),
+                    MaterialPageRoute(builder: (_) => const AllCitiesScreen()),
                   );
                 },
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surfaceColor,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.notifications_outlined,
-                    color: AppTheme.textPrimary,
-                    size: 24,
+                child: Text(
+                  'See all',
+                  style: GoogleFonts.inter(
+                    color: AppTheme.textSecondary,
+                    fontSize: 14,
                   ),
                 ),
               ),
-              if (user?.isAdmin == true) ...[
-                const SizedBox(width: 8),
-                 GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppTheme.primaryColor),
-                    ),
-                    child: const Icon(
-                      Icons.admin_panel_settings,
-                      color: AppTheme.primaryColor,
-                      size: 24,
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 16),
 
           SizedBox(
             height: 420,
@@ -369,39 +449,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildPlaceholderScreen() {
     return const Center(
       child: Text('Coming Soon'),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 6.0,
-      color: AppTheme.surfaceColor,
-      child: SizedBox(
-        height: 0.0,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(1, Icons.search),
-            _buildNavItem(2, Icons.grid_view_rounded),
-            const SizedBox(width: 48),
-            _buildNavItem(3, Icons.favorite_border),
-            _buildNavItem(4, Icons.person_outline),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(int index, IconData icon) {
-    final isSelected = _currentIndex == index;
-    return IconButton(
-      icon: Icon(
-        icon,
-        color: isSelected ? AppTheme.primaryColor : AppTheme.textTertiary,
-        size: 28,
-      ),
-      onPressed: () => setState(() => _currentIndex = index),
     );
   }
 }

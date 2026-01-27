@@ -5,6 +5,7 @@ import '../../providers/attraction_provider.dart';
 import '../../providers/city_provider.dart';
 import '../../models/attraction_model.dart';
 import 'add_edit_attraction_screen.dart';
+import '../../widgets/app_image.dart';
 
 class ManageAttractionsScreen extends StatelessWidget {
   const ManageAttractionsScreen({super.key});
@@ -29,6 +30,16 @@ class ManageAttractionsScreen extends StatelessWidget {
         title: const Text('Manage Attractions'),
         backgroundColor: AppTheme.surfaceColor,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushReplacementNamed(context, '/home');
+            }
+          },
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppTheme.primaryColor,
@@ -55,7 +66,9 @@ class ManageAttractionsScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             color: AppTheme.surfaceColor,
             child: DropdownButtonFormField<String>(
-              value: cityProvider.selectedCity?.id,
+              value: cityProvider.cities.any((c) => c.id == cityProvider.selectedCity?.id) 
+                  ? cityProvider.selectedCity?.id 
+                  : null,
               decoration: const InputDecoration(
                 labelText: 'Select City',
                 border: OutlineInputBorder(),
@@ -94,14 +107,12 @@ class ManageAttractionsScreen extends StatelessWidget {
                             child: ListTile(
                               leading: ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  attraction.imageUrls.isNotEmpty 
+                                child: AppImage(
+                                  imageUrl: attraction.imageUrls.isNotEmpty 
                                       ? attraction.imageUrls.first 
                                       : '',
                                   width: 60,
                                   height: 60,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_,__,___) => const Icon(Icons.image),
                                 ),
                               ),
                               title: Text(attraction.name, style: const TextStyle(color: Colors.white)),

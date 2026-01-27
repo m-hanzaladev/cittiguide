@@ -4,6 +4,8 @@ class CityModel {
   final String description;
   final String imageUrl;
   final String country;
+  final double? latitude;
+  final double? longitude;
 
   CityModel({
     required this.id,
@@ -11,6 +13,8 @@ class CityModel {
     required this.description,
     required this.imageUrl,
     required this.country,
+    this.latitude,
+    this.longitude,
   });
 
   // From JSON
@@ -21,6 +25,8 @@ class CityModel {
       description: json['description'] ?? '',
       imageUrl: json['imageUrl'] ?? '',
       country: json['country'] ?? '',
+      latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : null,
+      longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : null,
     );
   }
 
@@ -31,6 +37,8 @@ class CityModel {
       'description': description,
       'imageUrl': imageUrl,
       'country': country,
+      'latitude': latitude,
+      'longitude': longitude,
     };
   }
 
@@ -41,6 +49,8 @@ class CityModel {
     String? description,
     String? imageUrl,
     String? country,
+    double? latitude,
+    double? longitude,
   }) {
     return CityModel(
       id: id ?? this.id,
@@ -48,6 +58,8 @@ class CityModel {
       description: description ?? this.description,
       imageUrl: imageUrl ?? this.imageUrl,
       country: country ?? this.country,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
     );
   }
 }

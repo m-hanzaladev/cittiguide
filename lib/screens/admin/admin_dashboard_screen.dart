@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/app_constants.dart';
-import '../../utils/demo_data_helper.dart';
 import 'manage_cities_screen.dart';
 import 'manage_attractions_screen.dart';
 import 'manage_categories_screen.dart';
@@ -53,7 +52,13 @@ class AdminDashboardScreen extends StatelessWidget {
         backgroundColor: AppTheme.surfaceColor,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushReplacementNamed(context, '/home');
+            }
+          },
         ),
       ),
       body: SingleChildScrollView(
@@ -62,7 +67,7 @@ class AdminDashboardScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Welcome, Admin 🛡️',
+              'Welcome, Admin',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 8),
@@ -108,54 +113,6 @@ class AdminDashboardScreen extends StatelessWidget {
                   context, 
                   MaterialPageRoute(builder: (_) => const ManageCategoriesScreen())
                 );
-              },
-            ),
-            const SizedBox(height: 16),
-            _buildAdminCard(
-              context,
-              title: 'Seed Demo Data',
-              icon: Icons.cloud_upload_outlined,
-              color: AppTheme.accentBlue,
-              isAction: true,
-              onTap: () async {
-                final confirm = await showDialog<bool>(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    backgroundColor: AppTheme.surfaceColor,
-                    title: const Text('Seed Database?', style: TextStyle(color: Colors.white)),
-                    content: const Text(
-                      'This will add sample cities and attractions to your Firebase database. Existing data will not be deleted.',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx, false),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx, true),
-                        child: const Text('Seed', style: TextStyle(color: AppTheme.primaryColor)),
-                      ),
-                    ],
-                  ),
-                );
-                
-                if (confirm == true) {
-                   try {
-                     await DemoDataHelper.seedDatabase();
-                     if (context.mounted) {
-                       ScaffoldMessenger.of(context).showSnackBar(
-                         const SnackBar(content: Text('Database seeded successfully!')),
-                       );
-                     }
-                   } catch (e) {
-                     if (context.mounted) {
-                       ScaffoldMessenger.of(context).showSnackBar(
-                         SnackBar(content: Text('Error seeding data: $e')),
-                       );
-                     }
-                   }
-                }
               },
             ),
           ],

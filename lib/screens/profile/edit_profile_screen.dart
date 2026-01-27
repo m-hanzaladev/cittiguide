@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/custom_text_field.dart';
+import '../../services/storage_service.dart';
+import '../../services/database_service.dart';
+import '../../widgets/app_image.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -15,6 +19,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _nameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
+  String? _pickedBase64;
+  final ImagePicker _picker = ImagePicker();
+  final StorageService _storageService = StorageService();
+  final DatabaseService _databaseService = DatabaseService();
 
   @override
   void initState() {
@@ -31,6 +39,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        setState(() => _isLoading = true);
+        final base64 = await _storageService.fileToBase64(image);
+        setState(() {
+          _pickedBase64 = base64;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error picking profile image: $e");
+      setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _saveProfile() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
@@ -39,13 +64,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final currentUser = authProvider.currentUser;
       
       if (currentUser != null) {
-        // Create updated user object (keeping existing profilePicture url if any, or null)
-        // But user said "remove feature", so maybe we don't care about URL anymore.
-        // We'll just update the name.
-        
+        String finalImageUrl = currentUser.profilePicture ?? '';
+
+        // If we picked a new image, save it
+        if (_pickedBase64 != null) {
+          final String imagePath = 'users/${currentUser.id}';
+          await _databaseService.saveImage(imagePath, _pickedBase64!);
+          finalImageUrl = imagePath;
+        }
+
         final updatedUser = currentUser.copyWith(
           name: _nameController.text.trim(),
-          // We don't change profilePicture here anymore
+          profilePicture: finalImageUrl,
         );
         
         await authProvider.updateUserProfile(updatedUser);
@@ -64,11 +94,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Get current name for preview (or use controller text if user is typing?)
-    // Better to use controller text but handle empty case
+    final user = Provider.of<AuthProvider>(context).currentUser;
     String nameToDisplay = _nameController.text.trim();
     if (nameToDisplay.isEmpty) {
-        final user = Provider.of<AuthProvider>(context).currentUser;
         nameToDisplay = user?.name ?? '?';
     }
     String initial = nameToDisplay.isNotEmpty ? nameToDisplay.substring(0, 1).toUpperCase() : '?';
@@ -80,7 +108,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         backgroundColor: AppTheme.surfaceColor,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushReplacementNamed(context, '/home');
+            }
+          },
         ),
         actions: [
           IconButton(
@@ -98,29 +132,75 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: Column(
             children: [
               Center(
-                child: Container(
-                  width: 100,
-                  height: 100,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.primaryColor.withOpacity(0.3),
-                        blurRadius: 10,
-                        spreadRadius: 2,
+                child: GestureDetector(
+                  onTap: _pickImage,
+                  child: Stack(
+                    children: [
+                      Container(
+                        width: 120,
+                        height: 120,
+                        clipBehavior: Clip.antiAlias,
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primaryColor.withOpacity(0.3),
+                              blurRadius: 10,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: _pickedBase64 != null
+                            ? Image.memory(
+                                Uri.parse(_pickedBase64!).data!.contentAsBytes(),
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: double.infinity,
+                              )
+                            : (user?.profilePicture != null && user!.profilePicture!.isNotEmpty)
+                                ? AppImage(
+                                imageUrl: user.profilePicture!,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: double.infinity,
+                              )
+                            : Center(
+                                    child: Text(
+                                      initial,
+                                      style: const TextStyle(
+                                        fontSize: 48,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: AppTheme.primaryColor,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black26,
+                                blurRadius: 4,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: AppTheme.backgroundColor,
+                            size: 20,
+                          ),
+                        ),
                       ),
                     ],
-                  ),
-                  child: Text(
-                    initial,
-                    style: const TextStyle(
-                      fontSize: 40,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
                   ),
                 ),
               ),
@@ -128,14 +208,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               
               CustomTextField(
                 controller: _nameController,
-                hintText: 'Full Name',
+                labelText: 'Full Name',
+                hintText: 'Enter your name',
                 prefixIcon: Icons.person_outline,
                 validator: (val) => val == null || val.isEmpty ? 'Please enter your name' : null,
-                onChanged: (val) => setState(() {}), // Update avatar preview
+                onChanged: (val) => setState(() {}),
               ),
               const SizedBox(height: 16),
               CustomTextField(
-                controller: TextEditingController(text: Provider.of<AuthProvider>(context).currentUser?.email ?? ''),
+                controller: TextEditingController(text: user?.email ?? ''),
+                labelText: 'Email',
                 hintText: 'Email',
                 prefixIcon: Icons.email_outlined,
                 readOnly: true,

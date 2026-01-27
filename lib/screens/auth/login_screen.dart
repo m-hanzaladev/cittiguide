@@ -97,11 +97,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 20),
+                Center(
+                  child: Image.asset(
+                    'assets/app_logo.png',
+                    height: 100,
+                  ),
+                ),
+                const SizedBox(height: 20),
                 
                 // Welcome Text
                 Text(
-                  'Welcome Back 👋',
+                  'Welcome Back',
                   style: Theme.of(context).textTheme.displaySmall,
                 ),
                 const SizedBox(height: 8),
@@ -111,14 +118,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 40),
 
-                // Email Field
-                Text(
-                  'Email',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
                 CustomTextField(
                   controller: _emailController,
+                  labelText: 'Email',
                   hintText: 'Enter your email',
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: Icons.email_outlined,
@@ -134,14 +136,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Password Field
-                Text(
-                  'Password',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
                 CustomTextField(
                   controller: _passwordController,
+                  labelText: 'Password',
                   hintText: 'Enter your password',
                   obscureText: _obscurePassword,
                   prefixIcon: Icons.lock_outline,
